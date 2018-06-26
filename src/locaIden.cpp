@@ -81,7 +81,7 @@ int getIdenSerialNumber(char number[8])
     return 0;
 }
 
-int main()
+int maina()
 {
     //float *kx, float *ky, float *d;
     Mat img=imread("G:/DSC01048/1.jpg",0);
