@@ -9,11 +9,13 @@ using namespace cv;
 int main()
 {
     //float *kx, float *ky, float *d;
-    Mat img=imread("G:/DSC01048/1.jpg",0);
-    getCheckerboardUnitLength(img.data, img.cols, img.rows, 9,5, 1, NULL);
-    //setIdenImage(img.data, img.cols, img.rows, CardType::CARD_UP);
+    Mat img=imread("G:/DSC01048/a.bmp",0);
+    float unit=0;
+    //loca::getCheckerboardUnitLength(img.data, img.cols, img.rows, 10, &unit,true);
+    cout << unit << endl;
+    loca::setIdenImage(img.data, img.cols, img.rows, loca::CardType::CARD_UP);
     float postionX[4]; float postionY[4];
-    getIdenRectanglePosition(RECT_HORIZONTAL, postionX, postionY);
+    //loca::getIdenRectanglePosition(RECT_HORIZONTAL, postionX, postionY);
     for (size_t i = 0; i < 4; i++)
     {
         cout<<postionY[i];
