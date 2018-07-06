@@ -39,11 +39,12 @@ namespace loca{
     //imageData ，灰度图像地址
     //imageWidth ，图像宽
     //imageHeight ，图像高
+    //rectRegion ,需计算的棋盘格所在的区域
     //boardSize ，棋盘格上黑方块的尺寸mm
     //unit ，转换单位(像素/mm)
     //saveImage ，保存过程图像
     //return，返回值0 正常，-1 出错
-    LOCAPI int getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, int imageHeight, int boardSize, float *unit, bool saveImage = false);
+    LOCAPI int getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, int imageHeight, Rect rectRegion, int boardSize, float *unit, bool saveImage = false);
 
     //设置印刷板图像
     //imageData ，灰度图像地址
@@ -63,7 +64,7 @@ namespace loca{
 
     //获取矩形中心图上坐标及与水平线的偏角
     //rectRegion ,矩形所在的区域
-    //rotation ，矩形与水平线的偏角
+    //rotation ，矩形与水平线的偏角,单位°，水平线往上为正，往下为负
     //centre,矩形中心图上坐标，以rectRegion 的左上角为原点
     //saveImage ，保存过程图像
     //return，返回值0 正常，-1 出错

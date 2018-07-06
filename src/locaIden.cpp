@@ -3,6 +3,7 @@
 #include <iostream>
 #include<algorithm> 
 #include <opencv2\opencv.hpp>
+#include <ctime>
 using namespace std;
 using namespace cv;
 
@@ -43,17 +44,21 @@ void drawDelaunay2(Mat& img, float L[3], cv::Point2f pt1, cv::Point2f pt2)
         }
     }
 }
-float getCheckerboardPixelLength(Mat& img, Subdiv2D& subdiv, Scalar delaunay_color)
+float getCheckerboardPixelLength(Mat& img, Subdiv2D& subdiv, Scalar delaunay_color, bool saveImage)
 {
-
+    time_t T1 = clock();
     std::vector<Vec6f> triangleList;
     subdiv.getTriangleList(triangleList);
     std::vector<cv::Point2f> pt(3);
     Size size = img.size();
     cv::Rect rect(0, 0, size.width, size.height);
-    //Mat image;
-    //cvtColor(img, image, CV_GRAY2BGR);
+    Mat image;
+    if (saveImage)
+    {
+        cvtColor(img, image, CV_GRAY2BGR);
+    }
     int num = 0;
+    int gap = 5;
     double dist = 0;
     for (size_t i = 0; i < triangleList.size(); i++)
     {
@@ -74,54 +79,89 @@ float getCheckerboardPixelLength(Mat& img, Subdiv2D& subdiv, Scalar delaunay_col
             if (b < c){ t = b; b = c; c = t; }
             float L[3] = { a, b, c };
             //cout <<i<<"a\t"<< a << "\t" << b << "\t" << c << "\n";
-            if (b - 2 < c)
+            if (a<200)
+            {
+                continue;
+            }
+            if (b - gap < c)
             {
                 num += 2;
                 dist += b;
                 dist += c;
-                //cout << i << "c\t" << "\n\n";
-                //drawDelaunay(image,L, pt[0], pt[1]);
-                //drawDelaunay(image, L, pt[1], pt[2]);
-                //drawDelaunay(image, L, pt[2], pt[0]);
+                //cout << i << "c\t" << "\n\n";                
+                if (saveImage)
+                {
+                    drawDelaunay(image, L, pt[0], pt[1]);
+                    drawDelaunay(image, L, pt[1], pt[2]);
+                    drawDelaunay(image, L, pt[2], pt[0]);
+                }
+
             }
-            else if (b > a - 2)
+            else if (b > a - gap)
             {
 
                 num += 2;
                 dist += b;
                 dist += a;
                 //cout << i << "b\t" << "\n\n";
-                //drawDelaunay2(image, L, pt[0], pt[1]);
-                //drawDelaunay2(image, L, pt[1], pt[2]);
-                //drawDelaunay2(image, L, pt[2], pt[0]);
+                if (saveImage)
+                {
+                    drawDelaunay2(image, L, pt[0], pt[1]);
+                    drawDelaunay2(image, L, pt[1], pt[2]);
+                    drawDelaunay2(image, L, pt[2], pt[0]);
+                }
+
             }
 
         }
     }
+
+    time_t T2 = clock(); 
+    if (saveImage)
+    {
+         char c[512];
+         sprintf_s(c, "%fs", float(T2 - T1) / CLOCKS_PER_SEC); 
+         putText(image, c, cv::Point(50, 50), 1, 2, Scalar(0,0,255));
+         imwrite("Checkerboard2.jpg", image);
+    }
+    if (num==0)
+    {
+        return 0;
+    }
     return dist / num;
 
 }
-int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, int imageHeight, int boardSize, float *unit, bool saveImage)
+int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, int imageHeight, loca::Rect rectRegion, int boardSize, float *unit, bool saveImage)
 {
+    if (boardSize==0)
+    {
+        return -1;
+    }
+    time_t T1 = clock();
     Mat img = Mat(imageHeight, imageWidth, CV_8UC1, imageData);
-    Mat src = img.clone();
-
+    Mat src = img(cv::Rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height)).clone(); time_t T2 = clock();
+    //cout << float(T2 - T1) / CLOCKS_PER_SEC << endl;
+    medianBlur(src, src, 11);    
+    GaussianBlur(src, src, Size(0, 0), 1, 1);
     Mat dst, dst_norm, dst_norm_scaled;
     dst = Mat::zeros(src.size(), CV_32FC1);
-    int blockSize = 11;
+    int blockSize = 21;
     int apertureSize = 7;
     double k = 0.04;
     cornerHarris(src, dst, blockSize, apertureSize, k, BORDER_DEFAULT);
     normalize(dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
-    convertScaleAbs(dst_norm, dst_norm_scaled);
+    //convertScaleAbs(dst_norm, dst_norm_scaled);
     int old_i = 0, old_j = 0;
     int gap = 5;
     vector<cv::Point2f> corners;
-    for (int j = 0; j < dst_norm.rows; j++)
+    Mat tp;
+    blur(dst_norm, tp, Size(51, 51));
+    Mat dd = dst_norm - tp;
+    for (int j = 50; j < dst_norm.rows-50; j++)
     {
-        for (int i = 0; i < dst_norm.cols; i++)
+        for (int i = 50; i < dst_norm.cols-50; i++)
         {
-            if (dst_norm.at<float>(j, i) >80)
+            if (dd.at<float>(j, i) >50)
             {
                 if (i > old_i + gap || j > old_j + gap)
                 {
@@ -137,7 +177,7 @@ int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, i
         CV_TERMCRIT_EPS + CV_TERMCRIT_ITER,
         40, //maxCount=40  
         0.001);  //epsilon=0.001  
-    cornerSubPix(src, corners, Size(11, 11), zeroZone, criteria);
+    cornerSubPix(src, corners, Size(51, 51), zeroZone, criteria);
 
     cv::Point2f oldPT(0, 0), gapPT(0.1, 0.1);
     Subdiv2D subdiv(cv::Rect(0, 0, src.cols, src.rows));
@@ -156,15 +196,20 @@ int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, i
             }
         }
     }
-    *unit = getCheckerboardPixelLength(src, subdiv, Scalar(255)) / boardSize;
+    *unit = getCheckerboardPixelLength(src, subdiv, Scalar(255), saveImage) / boardSize;    
+
+    time_t T3 = clock();
+    //cout << float(T3 - T1) / CLOCKS_PER_SEC << endl;
     if (saveImage)
     {
         for (int i = 0; i < corners.size(); i++)
         {
             circle(src, corners[i], 5, Scalar(255), 1, 8, 0);
         }
-
-        imwrite("Checkerboard.jpg", src);
+        char c[512];
+        sprintf_s(c,"%fs",float(T3-T1)/CLOCKS_PER_SEC);
+        putText(src, c, cv::Point(50, 50), 1, 2,Scalar(125));
+        imwrite("Checkerboard1.jpg", src);
     }
 
     return 0;
@@ -177,15 +222,23 @@ int loca::setIdenImage(unsigned char * imageData, int imageWidth, int imageHeigh
 {
     Mat img = Mat(imageHeight, imageWidth, CV_8UC1, imageData);
     Mat src = img.clone();
-    GaussianBlur(src, src, Size(0,0), .5, .5);
+    GaussianBlur(src, src, Size(0,0), 1, 1);
     Mat dst, dst_norm, dst_norm_scaled;
     dst = Mat::zeros(src.size(), CV_32FC1);
     int blockSize = 11;
     int apertureSize = 7;
     double k = 0.04;
     cornerHarris(src, dst, blockSize, apertureSize, k, BORDER_DEFAULT);
+
     normalize(dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
     convertScaleAbs(dst_norm, dst_norm_scaled);
+
+    cv::Mat dilated, localMax;
+    //默认3*3核膨胀，膨胀之后，除了局部最大值点和原来相同，其它非局部最大值点被  
+    //3*3邻域内的最大值点取代  
+    cv::dilate(dst_norm, dilated, cv::Mat());
+    //与原图相比，只剩下和原图值相同的点，这些点都是局部最大值点，保存到localMax  
+    cv::compare(dst_norm, dilated, localMax, cv::CMP_EQ);
 
     vector<cv::Point2f> corners;
     for (int j = 0; j < dst_norm.rows; j++)
@@ -204,7 +257,7 @@ int loca::setIdenImage(unsigned char * imageData, int imageWidth, int imageHeigh
         CV_TERMCRIT_EPS + CV_TERMCRIT_ITER,
         40, //maxCount=40  
         0.001);  //epsilon=0.001  
-    cornerSubPix(src, corners, Size(7, 7), zeroZone, criteria);
+    cornerSubPix(src, corners, Size(11, 11), zeroZone, criteria);
     for (int i = 0; i < corners.size(); i++)
     {
 
