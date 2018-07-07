@@ -9,7 +9,7 @@ using namespace cv;
 
 float length(cv::Point2f a, cv::Point2f b)
 {
-    return abs((a.x - b.x) + (a.y - b.y));
+    return sqrt((a.x - b.x) *(a.x - b.x) + (a.y - b.y)* (a.y - b.y));
 }
 
 void drawDelaunay(Mat& img, float L[3], cv::Point2f pt1, cv::Point2f pt2)
@@ -58,7 +58,7 @@ float getCheckerboardPixelLength(Mat& img, Subdiv2D& subdiv, Scalar delaunay_col
         cvtColor(img, image, CV_GRAY2BGR);
     }
     int num = 0;
-    int gap = 5;
+    int gap = 10;
     double dist = 0;
     for (size_t i = 0; i < triangleList.size(); i++)
     {
@@ -70,6 +70,7 @@ float getCheckerboardPixelLength(Mat& img, Subdiv2D& subdiv, Scalar delaunay_col
         // Draw rectangles completely inside the image.  
         if (rect.contains(pt[0]) && rect.contains(pt[1]) && rect.contains(pt[2]))
         {
+
             float a = length(pt[0], pt[1]);
             float b = length(pt[2], pt[1]);
             float c = length(pt[0], pt[2]);
@@ -77,9 +78,15 @@ float getCheckerboardPixelLength(Mat& img, Subdiv2D& subdiv, Scalar delaunay_col
             if (a < b) { t = a; a = b; b = t; }
             if (a < c){ t = a; a = c; c = t; }
             if (b < c){ t = b; b = c; c = t; }
-            float L[3] = { a, b, c };
+            float L[3] = { a, b, c };            
+            if (saveImage)
+            {
+                drawDelaunay(image, L, pt[0], pt[1]);
+                drawDelaunay(image, L, pt[1], pt[2]);
+                drawDelaunay(image, L, pt[2], pt[0]);
+            }
             //cout <<i<<"a\t"<< a << "\t" << b << "\t" << c << "\n";
-            if (a<200)
+            if (a < 200)
             {
                 continue;
             }
@@ -116,15 +123,15 @@ float getCheckerboardPixelLength(Mat& img, Subdiv2D& subdiv, Scalar delaunay_col
         }
     }
 
-    time_t T2 = clock(); 
+    time_t T2 = clock();
     if (saveImage)
     {
-         char c[512];
-         sprintf_s(c, "%fs", float(T2 - T1) / CLOCKS_PER_SEC); 
-         putText(image, c, cv::Point(50, 50), 1, 2, Scalar(0,0,255));
-         imwrite("Checkerboard2.jpg", image);
+        char c[512];
+        sprintf_s(c, "%fs", double(T2 - T1) / CLOCKS_PER_SEC);
+        putText(image, c, cv::Point(50, 50), 1, 2, Scalar(0, 0, 255));
+        imwrite("Checkerboard2.jpg", image);
     }
-    if (num==0)
+    if (num == 0)
     {
         return 0;
     }
@@ -133,15 +140,16 @@ float getCheckerboardPixelLength(Mat& img, Subdiv2D& subdiv, Scalar delaunay_col
 }
 int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, int imageHeight, loca::Rect rectRegion, int boardSize, float *unit, bool saveImage)
 {
-    if (boardSize==0)
+    if (boardSize == 0)
     {
         return -1;
     }
     time_t T1 = clock();
-    Mat img = Mat(imageHeight, imageWidth, CV_8UC1, imageData);
+    Mat img = Mat(imageHeight, imageWidth, CV_8UC3, imageData).clone();
+    cvtColor(img, img, CV_BGR2GRAY);
     Mat src = img(cv::Rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height)).clone(); time_t T2 = clock();
     //cout << float(T2 - T1) / CLOCKS_PER_SEC << endl;
-    medianBlur(src, src, 11);    
+    medianBlur(src, src, 11);
     GaussianBlur(src, src, Size(0, 0), 1, 1);
     Mat dst, dst_norm, dst_norm_scaled;
     dst = Mat::zeros(src.size(), CV_32FC1);
@@ -157,9 +165,10 @@ int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, i
     Mat tp;
     blur(dst_norm, tp, Size(51, 51));
     Mat dd = dst_norm - tp;
-    for (int j = 50; j < dst_norm.rows-50; j++)
+    
+    for (int j = 50; j < dst_norm.rows - 50; j++)
     {
-        for (int i = 50; i < dst_norm.cols-50; i++)
+        for (int i = 50; i < dst_norm.cols - 50; i++)
         {
             if (dd.at<float>(j, i) >50)
             {
@@ -172,6 +181,7 @@ int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, i
             }
         }
     }
+
     Size zeroZone = Size(-1, -1);
     TermCriteria criteria = TermCriteria(
         CV_TERMCRIT_EPS + CV_TERMCRIT_ITER,
@@ -196,7 +206,11 @@ int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, i
             }
         }
     }
-    *unit = getCheckerboardPixelLength(src, subdiv, Scalar(255), saveImage) / boardSize;    
+    if (corners.size()>100)
+    {
+        return -1;
+    }
+    *unit = getCheckerboardPixelLength(src, subdiv, Scalar(255), saveImage) / boardSize;
 
     time_t T3 = clock();
     //cout << float(T3 - T1) / CLOCKS_PER_SEC << endl;
@@ -207,8 +221,8 @@ int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, i
             circle(src, corners[i], 5, Scalar(255), 1, 8, 0);
         }
         char c[512];
-        sprintf_s(c,"%fs",float(T3-T1)/CLOCKS_PER_SEC);
-        putText(src, c, cv::Point(50, 50), 1, 2,Scalar(125));
+        sprintf_s(c, "%fs", double(T3 - T1) / CLOCKS_PER_SEC);
+        putText(src, c, cv::Point(50, 50), 1, 2, Scalar(125));
         imwrite("Checkerboard1.jpg", src);
     }
 
@@ -218,11 +232,18 @@ int loca::getCheckerboardUnitLength(unsigned char * imageData, int imageWidth, i
 
 
 Mat idenImage;
+loca::CardType cardTyp;
+
 int loca::setIdenImage(unsigned char * imageData, int imageWidth, int imageHeight, loca::CardType cardType)
 {
-    Mat img = Mat(imageHeight, imageWidth, CV_8UC1, imageData);
+    cardTyp = cardType;
+    Mat img = Mat(imageHeight, imageWidth, CV_8UC3, imageData).clone();
+    cvtColor(img, img, CV_BGR2GRAY);
     Mat src = img.clone();
-    GaussianBlur(src, src, Size(0,0), 1, 1);
+    //GaussianBlur(src, src, Size(0,0), 1, 1);
+    medianBlur(src, src, 11);
+    idenImage = src.clone();
+    return 0;
     Mat dst, dst_norm, dst_norm_scaled;
     dst = Mat::zeros(src.size(), CV_32FC1);
     int blockSize = 11;
@@ -270,38 +291,253 @@ int loca::setIdenImage(unsigned char * imageData, int imageWidth, int imageHeigh
     adaptiveThreshold(img, dst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY,137,1);
     std::vector< std::vector< cv::Point> > contours;
     cv::findContours(
-        dst,
-        contours,
-        cv::noArray(),
-        cv::RETR_LIST,
-        cv::CHAIN_APPROX_SIMPLE
-        );
+    dst,
+    contours,
+    cv::noArray(),
+    cv::RETR_LIST,
+    cv::CHAIN_APPROX_SIMPLE
+    );
     vector<Rect> rests;
     for (size_t i = 0; i < contours.size(); i++)
     {
-       Rect rect= boundingRect(contours[i]);
-       if ((rect.width>30 && rect.height>300) || (rect.width>300 && rect.height>30))
-       {
-           rests.push_back(rect);
-           rectangle(img, rect, Scalar(255), 5);
-       }
+    Rect rect= boundingRect(contours[i]);
+    if ((rect.width>30 && rect.height>300) || (rect.width>300 && rect.height>30))
+    {
+    rests.push_back(rect);
+    rectangle(img, rect, Scalar(255), 5);
+    }
     }*/
     return 0;
 }
 
 
-int  loca::getIdenRectanglePosition(loca::RectangleType rectType, loca::Point2f postion[4], bool saveImage)
+int  loca::getIdenRectanglePosition(loca::Rect rectRegion, loca::RectangleType rectType, loca::Point2f *postion, bool saveImage)
 {
+    cv::Rect rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
+    Mat img = idenImage(rect).clone();
+    Mat dst;
+    GaussianBlur(img, dst, Size(21, 21), 2, 2);
+    //Mat dst;
+    adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 137, 50);
+    std::vector< std::vector< cv::Point> > contours;
+    cv::findContours(dst.clone(), contours, cv::noArray(), cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
+    vector<cv::RotatedRect> rests;
+    cv::Point2f points[4];
+    for (size_t i = 0; i < contours.size(); i++)
+    {
+        cv::Rect rect = boundingRect(contours[i]);
+        float WHR = 1.0*rect.width / rect.height;
+        cout << rect << endl;
+        switch (rectType)
+        {
+        case loca::RECT_HORIZONTAL:
+            if ((rect.width > 80 && rect.height > 30))
+                if (WHR > 2)
+                {
+                    RotatedRect rotRect = minAreaRect(contours[i]);
+                    rests.push_back(rotRect);
+                    //rectangle(img, rect, Scalar(125), 5);
+                    rotRect.points(points); 
+
+                    if (saveImage)
+                    {
+                        circle(img, points[0], 5, Scalar(200));
+                        circle(img, points[1], 5, Scalar(200));
+                        circle(img, points[2], 5, Scalar(200));
+                        circle(img, points[3], 5, Scalar(200));
+                        circle(img, rotRect.center, 5, Scalar(200), -1);
+
+                    }
+                }
+            break;
+        case loca::RECT_VERTICAL:
+            if ((rect.width > 20 && rect.height > 80))
+                if (1.0 / WHR > 2)
+                {
+                    RotatedRect rotRect = minAreaRect(contours[i]);
+                    rests.push_back(rotRect);
+                    //rectangle(img, rect, Scalar(255), 5);      
+                    rotRect.points(points);                   
+                     
+
+                    if (saveImage)
+                    {
+                        circle(img, points[0], 5, Scalar(200));
+                        circle(img, points[1], 5, Scalar(200));
+                        circle(img, points[2], 5, Scalar(200));
+                        circle(img, points[3], 5, Scalar(200));
+                        circle(img, rotRect.center, 5, Scalar(200), -1);
+
+                    }
+
+                }
+            break;
+        default:
+            break;
+        }
+    }//for i
+
+    if (saveImage)
+    {
+        imwrite("getIdenRectangleRC.jpg", img);
+    }
+    if (rests.size() != 1)
+    {
+        return -1;
+    }
     for (size_t i = 0; i < 4; i++)
     {
-        postion[i].x = i;
-        postion[i].y = i;
+        postion[i].x = points[i].x;
+        postion[i].y = points[i].y;
     }
     return 0;
+
+    return 0;
+}
+ 
+ 
+float getAngel(cv::Point2f pts[4])
+{
+    int max1=0, max2=0;
+    for (size_t i = 0; i < 4; i++)
+    {
+        cout << pts[i] << endl;
+        if (pts[i].y>pts[max1].y)
+        {
+            max1 = i;
+        }
+    }
+    max2 = (max1 + 1) % 4;
+    for (size_t i = 0; i < 4; i++)
+    {
+        cout << pts[i] << endl;
+        if (pts[i].y>pts[max2].y)
+        {
+            if (max1 != i)
+            {
+                max2 = i;
+            }
+        }
+    }
+ 
+    cv::Point2f pt1;
+    cv::Point2f pt2;
+    if (pts[max1].x<pts[max2].x)
+    {
+        pt1 = pts[max1];
+        pt2 = pts[max2];
+    }
+    else
+    {
+
+        pt2 = pts[max1];
+        pt1= pts[max2];
+    }
+    cv::Point2f tp = pt2 - pt1;
+    pt2 = cv::Point2f(pt2.x, pt1.y) - pt1;
+    pt1 = tp;
+    float theta = 0;
+    theta = (pt1.x*pt2.x + pt1.y *pt2.y) / (sqrt(pt1.x*pt1.x + pt1.y *pt1.y)*sqrt(pt2.x*pt2.x + pt2.y *pt2.y));
+    theta = acos(theta);
+    theta = theta * 180.0 / CV_PI;
+    if (pt1.y>0)
+    {
+        theta = -theta;
+    }
+
+    return theta;
 }
 
-int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType, float* rotation, loca::Point2f* centre, bool saveImage)
+int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType, float* rotation, loca::Point2f centre[4], bool saveImage)
 {
+    cv::Rect rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
+    Mat img = idenImage(rect).clone();
+    if (saveImage)
+    {
+        char c[512];
+        sprintf_s(c, "%0.1f %0.1f %0.1f %0.1f", rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
+        putText(img, c, cv::Point(50, 50), 1, 2, Scalar(125));
+        imwrite("getIdenRectangleRC1.jpg", img);
+        imwrite("getIdenRectangleRC0.jpg", idenImage);
+    }
+    Mat dst;
+    GaussianBlur(img, dst, Size(21, 21), 2, 2);
+    //Mat dst;
+    adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 137, 70);
+    std::vector< std::vector< cv::Point> > contours;
+    cv::findContours(dst.clone(), contours, cv::noArray(), cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
+    vector<cv::RotatedRect> rests;
+    for (size_t i = 0; i < contours.size(); i++)
+    {
+        cv::Rect rect = boundingRect(contours[i]);
+        float WHR = 1.0*rect.width / rect.height;
+        cout << rect << endl;
+        switch (rectType)
+        {
+        case loca::RECT_HORIZONTAL:
+            if ( (rect.width > 80 && rect.height > 30))
+                if (WHR > 2)
+                {
+                    RotatedRect rotRect = minAreaRect(contours[i]);
+                    rests.push_back(rotRect);
+                    //rectangle(img, rect, Scalar(125), 5);
+                    cv::Point2f points[4];
+                    rotRect.points(points);                  
+                    float angel = getAngel(points);
+                    *rotation = angel;
+                    centre->x = rotRect.center.x;
+                    centre->y = rotRect.center.y;
+             
+                    if (saveImage)
+                    {
+                        circle(img, points[0], 5, Scalar(200), -1);
+                        circle(img, points[1], 5, Scalar(200), -1);
+                        circle(img, points[2], 5, Scalar(200), -1);
+                        circle(img, points[3], 5, Scalar(200), -1);
+                        circle(img, rotRect.center, 5, Scalar(200), -1);
+
+                    }
+                }
+            break;
+        case loca::RECT_VERTICAL:
+            if ((rect.width > 20 && rect.height > 80) )
+                if (1.0 / WHR > 2)
+                {
+                    RotatedRect rotRect = minAreaRect(contours[i]);
+                    rests.push_back(rotRect);
+                    //rectangle(img, rect, Scalar(255), 5);                    
+                    cv::Point2f points[4];
+                    rotRect.points(points);
+
+                    float angel = getAngel(points);
+                    *rotation = angel;
+                    centre->x = rotRect.center.x;
+                    centre->y = rotRect.center.y;
+
+                    if (saveImage)
+                    {
+                        circle(img, points[0], 5, Scalar(200), -1);
+                        circle(img, points[1], 5, Scalar(200), -1);
+                        circle(img, points[2], 5, Scalar(200), -1);
+                        circle(img, points[3], 5, Scalar(200), -1);
+                        circle(img, rotRect.center, 5, Scalar(200), -1);
+
+                    }
+
+                }
+            break;
+        default:
+            break;
+        }
+    }//for i
+    if (saveImage)
+    {
+        imwrite("getIdenRectangleRC2.jpg",img);
+    }
+    if (rests.size() != 1)
+    {
+        return -1;
+    }
     return 0;
 }
 int getIdenSerialNumber(char number[8])

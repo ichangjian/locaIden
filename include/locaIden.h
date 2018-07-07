@@ -55,11 +55,12 @@ namespace loca{
     LOCAPI int setIdenImage(unsigned char * imageData, int imageWidth, int imageHeight, CardType cardType);
 
     //获取矩形四个角的图上坐标
+    //rectRegion ,矩形所在的区域
     //rectType ，矩形的类型
-    //postionX[4], postionY[4],矩形四个角的x、y坐标，以左上角开始顺时针排列
+    //postion[4],矩形四个角的x、y坐标，以左上角开始顺时针排列
     //saveImage ，保存过程图像
     //return，返回值0 正常，-1 出错
-    LOCAPI int getIdenRectanglePosition(RectangleType rectType, Point2f postion[4], bool saveImage = false);
+    LOCAPI int getIdenRectanglePosition(loca::Rect rectRegion, RectangleType rectType, Point2f postion[4], bool saveImage = false);
 
 
     //获取矩形中心图上坐标及与水平线的偏角
