@@ -311,7 +311,7 @@ int loca::setIdenImage(unsigned char * imageData, int imageWidth, int imageHeigh
 }
 
 
-int  loca::getIdenRectanglePosition(loca::Rect rectRegion, loca::RectangleType rectType, loca::Point2f *postion, bool saveImage)
+int  loca::getIdenRectanglePosition(loca::Rect rectRegion, loca::RectangleType rectType, loca::Point2f postion[4], bool saveImage)
 {
     cv::Rect rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
     Mat img = idenImage(rect).clone();
@@ -327,7 +327,7 @@ int  loca::getIdenRectanglePosition(loca::Rect rectRegion, loca::RectangleType r
     {
         cv::Rect rect = boundingRect(contours[i]);
         float WHR = 1.0*rect.width / rect.height;
-        cout << rect << endl;
+        //cout << rect << endl;
         switch (rectType)
         {
         case loca::RECT_HORIZONTAL:
@@ -401,7 +401,7 @@ float getAngel(cv::Point2f pts[4])
     int max1=0, max2=0;
     for (size_t i = 0; i < 4; i++)
     {
-        cout << pts[i] << endl;
+        //cout << pts[i] << endl;
         if (pts[i].y>pts[max1].y)
         {
             max1 = i;
@@ -410,7 +410,7 @@ float getAngel(cv::Point2f pts[4])
     max2 = (max1 + 1) % 4;
     for (size_t i = 0; i < 4; i++)
     {
-        cout << pts[i] << endl;
+        //cout << pts[i] << endl;
         if (pts[i].y>pts[max2].y)
         {
             if (max1 != i)
@@ -448,22 +448,31 @@ float getAngel(cv::Point2f pts[4])
     return theta;
 }
 
-int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType, float* rotation, loca::Point2f centre[4], bool saveImage)
+int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType, float* rotation, loca::Point2f *centre, bool saveImage)
 {
     cv::Rect rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
     Mat img = idenImage(rect).clone();
+    //img = imread("G:/DSC01048/a.jpg", 0);
+    Mat dst;
+    blur(img,dst,Size(17,17));
+    GaussianBlur(dst, dst, Size(21, 21), 2, 2);
     if (saveImage)
     {
         char c[512];
         sprintf_s(c, "%0.1f %0.1f %0.1f %0.1f", rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
         putText(img, c, cv::Point(50, 50), 1, 2, Scalar(125));
+        sprintf_s(c, "rectType %d", (int)rectType);
+        putText(img, c, cv::Point(50, 150), 1, 2, Scalar(125));
         imwrite("getIdenRectangleRC1.jpg", img);
         imwrite("getIdenRectangleRC0.jpg", idenImage);
     }
-    Mat dst;
-    GaussianBlur(img, dst, Size(21, 21), 2, 2);
     //Mat dst;
-    adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 137, 70);
+    adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 137, 50);
+    if (saveImage)
+    {
+ 
+        imwrite("getIdenRectangleRC3.jpg", dst);
+    }
     std::vector< std::vector< cv::Point> > contours;
     cv::findContours(dst.clone(), contours, cv::noArray(), cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
     vector<cv::RotatedRect> rests;
@@ -471,12 +480,12 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
     {
         cv::Rect rect = boundingRect(contours[i]);
         float WHR = 1.0*rect.width / rect.height;
-        cout << rect << endl;
+        //cout << rect << endl;
         switch (rectType)
         {
         case loca::RECT_HORIZONTAL:
             if ( (rect.width > 80 && rect.height > 30))
-                if (WHR > 2)
+                if (WHR > 1.5)
                 {
                     RotatedRect rotRect = minAreaRect(contours[i]);
                     rests.push_back(rotRect);
