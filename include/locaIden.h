@@ -65,11 +65,14 @@ namespace loca{
 
     //获取矩形中心图上坐标及与水平线的偏角
     //rectRegion ,矩形所在的区域
+    //rectType ，矩形的类型
+    //markWidth ,矩形的图上宽
+    //markHeight ,矩形的图上高
     //rotation ，矩形与水平线的偏角,单位°，水平线往上为正，往下为负
     //centre,矩形中心图上坐标，以rectRegion 的左上角为原点
     //saveImage ，保存过程图像
     //return，返回值0 正常，-1 出错
-    LOCAPI int getIdenRectangleRC(Rect rectRegion, RectangleType rectType, float* rotation, Point2f* centre, bool saveImage = false);
+    LOCAPI int getIdenRectangleRC(Rect rectRegion, RectangleType rectType, int markWidth,int markHeight,float* rotation, Point2f* centre, bool saveImage = false);
 
     //获取数字
     //return，返回值0 正常，-1 出错

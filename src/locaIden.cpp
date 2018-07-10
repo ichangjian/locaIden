@@ -313,6 +313,7 @@ int loca::setIdenImage(unsigned char * imageData, int imageWidth, int imageHeigh
 
 int  loca::getIdenRectanglePosition(loca::Rect rectRegion, loca::RectangleType rectType, loca::Point2f postion[4], bool saveImage)
 {
+    return -1;
     cv::Rect rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
     Mat img = idenImage(rect).clone();
     Mat dst;
@@ -448,7 +449,7 @@ float getAngel(cv::Point2f pts[4])
     return theta;
 }
 
-int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType, float* rotation, loca::Point2f *centre, bool saveImage)
+int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType, int markWidth, int markHeight, float* rotation, loca::Point2f *centre, bool saveImage)
 {
     cv::Rect rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
     Mat img = idenImage(rect).clone();
@@ -461,7 +462,7 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
         char c[512];
         sprintf_s(c, "%0.1f %0.1f %0.1f %0.1f", rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
         putText(img, c, cv::Point(50, 50), 1, 2, Scalar(125));
-        sprintf_s(c, "rectType %d", (int)rectType);
+        sprintf_s(c, "rectType %d,%d,%d", (int)rectType,markWidth, markHeight);
         putText(img, c, cv::Point(50, 150), 1, 2, Scalar(125));
         imwrite("getIdenRectangleRC1.jpg", img);
         imwrite("getIdenRectangleRC0.jpg", idenImage);
@@ -478,16 +479,17 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
     vector<cv::RotatedRect> rests;
     for (size_t i = 0; i < contours.size(); i++)
     {
-        cv::Rect rect = boundingRect(contours[i]);
-        float WHR = 1.0*rect.width / rect.height;
+        RotatedRect rotRect = minAreaRect(contours[i]);
+        cv::Rect rect = cv::Rect(0, 0, rotRect.size.width, rotRect.size.height);// boundingRect(contours[i]);
+        //float WHR = 1.0*rect.width / rect.height;
         //cout << rect << endl;
         switch (rectType)
         {
         case loca::RECT_HORIZONTAL:
-            if ( (rect.width > 80 && rect.height > 30))
-                if (WHR > 1.5)
+            if ((rect.width > markWidth*0.8 && rect.height > markHeight*0.8) && (rect.width < markWidth*1.2 && rect.height < markHeight*1.2))
+                //if (WHR > 1.5)
                 {
-                    RotatedRect rotRect = minAreaRect(contours[i]);
+                   
                     rests.push_back(rotRect);
                     //rectangle(img, rect, Scalar(125), 5);
                     cv::Point2f points[4];
@@ -509,10 +511,10 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
                 }
             break;
         case loca::RECT_VERTICAL:
-            if ((rect.width > 20 && rect.height > 80) )
-                if (1.0 / WHR > 2)
+            if ((rect.width > markWidth*0.8 && rect.height > markHeight*0.8) && (rect.width < markWidth*1.2 && rect.height < markHeight*1.2))
+                //if (1.0 / WHR > 2)
                 {
-                    RotatedRect rotRect = minAreaRect(contours[i]);
+                    //RotatedRect rotRect = minAreaRect(contours[i]);
                     rests.push_back(rotRect);
                     //rectangle(img, rect, Scalar(255), 5);                    
                     cv::Point2f points[4];
