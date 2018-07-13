@@ -16,10 +16,11 @@ set ( SRC
     ${FILES_SAMPLE_TEST}
 )
 add_executable( testLocaIden ${SRC} )
-target_link_libraries( testLocaIden locaIden)
+target_link_libraries( testLocaIden locaIden usbCamera)
 target_link_libraries( testLocaIden ${OPENCV_LIB_DIR}/opencv_world300.lib)
 SET_TARGET_PROPERTIES(testLocaIden  PROPERTIES  RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/bin)
 SET_TARGET_PROPERTIES(locaIden  PROPERTIES  RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/bin)
+SET_TARGET_PROPERTIES(usbCamera  PROPERTIES  RUNTIME_OUTPUT_DIRECTORY  ${CMAKE_BINARY_DIR}/bin)
 #if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 #target_link_libraries( testLocaIden ${OPENCV_LIB_DIR}/opencv_world300d.lib)
 #SET_TARGET_PROPERTIES(locaIden  PROPERTIES    #表示生成的执行文件所在路径  
