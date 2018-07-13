@@ -451,9 +451,9 @@ float getAngel(cv::Point2f pts[4])
 
 int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType, int markWidth, int markHeight, float* rotation, loca::Point2f *centre, bool saveImage)
 {
-    cv::Rect rect(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
-    Mat img = idenImage(rect).clone();
-    //img = imread("G:/DSC01048/a.jpg", 0);
+    cv::Rect rectSrc(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
+    Mat img = idenImage(rectSrc).clone();
+    //img = imread("G:/DSC01048/1/getIdenRectangleRC2.jpg", 0);
     Mat dst;
     blur(img,dst,Size(17,17));
     GaussianBlur(dst, dst, Size(21, 21), 2, 2);
@@ -469,6 +469,8 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
     }
     //Mat dst;
     adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 137, 50);
+    //threshold(dst, dst, 0, 255, THRESH_OTSU);
+
     if (saveImage)
     {
  
@@ -480,13 +482,22 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
     for (size_t i = 0; i < contours.size(); i++)
     {
         RotatedRect rotRect = minAreaRect(contours[i]);
-        cv::Rect rect = cv::Rect(0, 0, rotRect.size.width, rotRect.size.height);// boundingRect(contours[i]);
+        // boundingRect(contours[i]);
         //float WHR = 1.0*rect.width / rect.height;
-        //cout << rect << endl;
+        cv::Rect rect;
         switch (rectType)
         {
         case loca::RECT_HORIZONTAL:
-            if ((rect.width > markWidth*0.8 && rect.height > markHeight*0.8) && (rect.width < markWidth*1.2 && rect.height < markHeight*1.2))
+            if (rotRect.size.width>rotRect.size.height)
+            {
+                rect = cv::Rect(0, 0, rotRect.size.width, rotRect.size.height);
+            }
+            else
+            {
+                rect = cv::Rect(0, 0, rotRect.size.height, rotRect.size.width);
+            }
+            
+            if ((rect.width > markWidth*0.6 && rect.height > markHeight*0.6) && (rect.width < markWidth*1.3 && rect.height < markHeight*1.3))
                 //if (WHR > 1.5)
                 {
                    
@@ -511,7 +522,15 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
                 }
             break;
         case loca::RECT_VERTICAL:
-            if ((rect.width > markWidth*0.8 && rect.height > markHeight*0.8) && (rect.width < markWidth*1.2 && rect.height < markHeight*1.2))
+            if (rotRect.size.width>rotRect.size.height)
+            {
+                rect = cv::Rect(0, 0, rotRect.size.height, rotRect.size.width);
+            }
+            else
+            {
+                rect = cv::Rect(0, 0, rotRect.size.width, rotRect.size.height);
+            }
+            if ((rect.width > markWidth*0.6 && rect.height > markHeight*0.6) && (rect.width < markWidth*1.3 && rect.height < markHeight*1.3))
                 //if (1.0 / WHR > 2)
                 {
                     //RotatedRect rotRect = minAreaRect(contours[i]);
