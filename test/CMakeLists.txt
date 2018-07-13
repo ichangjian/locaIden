@@ -2,18 +2,18 @@ set ( ROOT .. )
 include_directories ( ../include )
 include_directories ( ${OPENCV_INCLUDE_DIR} )
 
-set ( FILES_HEADER_IMGWALL ${ROOT}/include/locaIden.h)
-set ( FILES_SAMPLE_IMGWALL ${ROOT}/test/testLocaIden.cpp)
+set ( FILES_HEADER_TEST ${ROOT}/include/locaIden.h)
+set ( FILES_SAMPLE_TEST ${ROOT}/test/testLocaIden.cpp)
 
-source_group( "include_LocaIden"       FILES ${FILES_HEADER_IMGWALL} )
-source_group( "sample_LocaIden"        FILES ${FILES_SAMPLE_IMGWALL} )
+source_group( "include_LocaIden"       FILES ${FILES_HEADER_TEST} )
+source_group( "sample_LocaIden"        FILES ${FILES_SAMPLE_TEST} )
 
 #######################################################################################
 # project sample_hiar
 #######################################################################################
 set ( SRC
-    ${FILES_HEADER_IMGWALL}
-    ${FILES_SAMPLE_IMGWALL}
+    ${FILES_HEADER_TEST}
+    ${FILES_SAMPLE_TEST}
 )
 add_executable( testLocaIden ${SRC} )
 target_link_libraries( testLocaIden locaIden)
