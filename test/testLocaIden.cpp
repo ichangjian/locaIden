@@ -67,18 +67,27 @@ void testCamera()
 {
     usbCamera *camera=nullptr;
     creatCamera(&camera);
-    cout<<camera->openCamera(0);
-    cout << camera->setResolution(1920, 1080);
+	cout << camera->openCamera(0);
+	cout << camera->setCameraParam(CameraParam::FRAME_WIDTH, 640);
+	cout << camera->setCameraParam(CameraParam::FRAME_HEIGHT, 480);
+
     for (size_t i = 0; i < 10; i++)
     {
-        cout << camera->showCamera("show");
+		cout << i;
+		cout << camera->setCameraParam(CameraParam::FLIPPING, 0);
+		cout << camera->showCamera("show1");
+		cout << camera->setCameraParam(CameraParam::FLIPPING, 1);
+		cout << camera->showCamera("show2");
     }
     cout << camera->saveImage("tp.jpg");
-    unsigned char *data = new unsigned char[1920 * 1080*3];
-    camera->getImageData(data, ImageType::BGR);
-    camera->saveImageData(data, ImageType::BGR, "tp2.jpg");
-    Mat img(480,640,CV_8UC3,data);
-    cvtColor(img, img, CV_RGB2BGR);
+	unsigned char *data = new unsigned char[640 * 480*3]();
+	camera->getImageData(data, ImageType::BGR);
+	camera->saveImageData(data, ImageType::BGR, "tp2.jpg");
+	for (size_t i = 0; i < 10; i++)
+	{
+		camera->showImage(data, ImageType::BGR, "image");
+
+	}
     releaseCamera(camera);
     delete[] data;
     //getchar();
