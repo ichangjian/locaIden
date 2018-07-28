@@ -241,7 +241,7 @@ int loca::setIdenImage(unsigned char * imageData, int imageWidth, int imageHeigh
     cvtColor(img, img, CV_BGR2GRAY);
     Mat src = img.clone();
     //GaussianBlur(src, src, Size(0,0), 1, 1);
-    medianBlur(src, src, 11);
+    //medianBlur(src, src, 11);
     idenImage = src.clone();
     return 0;
     Mat dst, dst_norm, dst_norm_scaled;
@@ -455,8 +455,9 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
     Mat img = idenImage(rectSrc).clone();
     //img = imread("G:/DSC01048/1/getIdenRectangleRC2.jpg", 0);
     Mat dst;
-    blur(img,dst,Size(17,17));
-    GaussianBlur(dst, dst, Size(21, 21), 2, 2);
+    //blur(img,dst,Size(27,27));
+	medianBlur(img, dst, 17);
+	GaussianBlur(dst, dst, Size(51, 51), 20, 20);
     if (saveImage)
     {
         char c[512];
@@ -467,18 +468,24 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
         imwrite("getIdenRectangleRC1.jpg", img);
         imwrite("getIdenRectangleRC0.jpg", idenImage);
     }
+	markWidth += 17;
+	markHeight += 17;
     //Mat dst;
-    adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 137, 50);
-    //threshold(dst, dst, 0, 255, THRESH_OTSU);
-
+    //adaptiveThreshold(dst, dst, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, 137, 10);
+    //cout<<
+	Mat tpImg;
+	int thr = threshold(dst, dst, 0, 255, THRESH_BINARY_INV | THRESH_OTSU);
+	//dst = dst < thr - 20;
+	//erode(dst, dst, Mat(5, 5, CV_8UC1, Scalar(1)));
+	//dilate(dst, dst, Mat(5, 5, CV_8UC1, Scalar(1)));
     if (saveImage)
     {
  
         imwrite("getIdenRectangleRC3.jpg", dst);
     }
     std::vector< std::vector< cv::Point> > contours;
-    cv::findContours(dst.clone(), contours, cv::noArray(), cv::RETR_LIST, cv::CHAIN_APPROX_NONE);
-    vector<cv::RotatedRect> rests;
+	cv::findContours(dst.clone(), contours, cv::noArray(), cv::RETR_EXTERNAL, cv::CHAIN_APPROX_NONE);
+    vector<cv::RotatedRect> rests; 
     for (size_t i = 0; i < contours.size(); i++)
     {
         RotatedRect rotRect = minAreaRect(contours[i]);
@@ -509,14 +516,32 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
                     *rotation = angel;
                     centre->x = rotRect.center.x;
                     centre->y = rotRect.center.y;
-             
+
+					Scalar cen = mean(contours[i]);
+					centre->x = cen[0];
+					centre->y = cen[1];
+
+					vector<float> lin;
+					fitLine(contours[i], lin, DIST_L2, 0, 0.0001, 0.0001);
+					*rotation = -atan(lin[1] / lin[0])* 180.0 / CV_PI;
+
+					//cout << "rotRect\t" << rotRect.center << "\n"; 
+					//cout << cen << endl;
+
+					
                     if (saveImage)
-                    {
+					{
+						//cout << "atan\t" << atan(lin[1] / lin[0])* 180.0 / CV_PI << "\n";
                         circle(img, points[0], 5, Scalar(200), -1);
                         circle(img, points[1], 5, Scalar(200), -1);
                         circle(img, points[2], 5, Scalar(200), -1);
                         circle(img, points[3], 5, Scalar(200), -1);
-                        circle(img, rotRect.center, 5, Scalar(200), -1);
+						circle(img, rotRect.center, 5, Scalar(200), -1);
+						//circle(img, rotRect.center, 5, Scalar(200), -1);
+						//line(img, points[0], points[3], Scalar(100), 2);
+						//line(img, points[1], points[0], Scalar(100), 2);
+						//line(img, points[2], points[1], Scalar(100), 2);
+						//line(img, points[3], points[2], Scalar(100), 2);
 
                     }
                 }
@@ -544,13 +569,29 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
                     centre->x = rotRect.center.x;
                     centre->y = rotRect.center.y;
 
+					Scalar cen = mean(contours[i]);
+					centre->x = cen[0];
+					centre->y = cen[1];
+
+					vector<float> lin;
+					fitLine(contours[i], lin, DIST_L2, 0, 0.0001, 0.0001);
+					*rotation = atan(lin[0] / lin[1])* 180.0 / CV_PI;
+
+					//cout << "rotRect\t" << rotRect.center << "\n";
+					//cout << cen << endl;
+
                     if (saveImage)
-                    {
+					{
+						//cout << "atan\t" << atan(lin[0] / lin[1])* 180.0 / CV_PI << "\n";
                         circle(img, points[0], 5, Scalar(200), -1);
                         circle(img, points[1], 5, Scalar(200), -1);
                         circle(img, points[2], 5, Scalar(200), -1);
                         circle(img, points[3], 5, Scalar(200), -1);
-                        circle(img, rotRect.center, 5, Scalar(200), -1);
+						circle(img, rotRect.center, 5, Scalar(200), -1);
+						//line(img, points[0], points[3], Scalar(100), 2);
+						//line(img, points[1], points[0], Scalar(100), 2);
+						//line(img, points[2], points[1], Scalar(100), 2);
+						//line(img, points[3], points[2], Scalar(100), 2);
 
                     }
 
