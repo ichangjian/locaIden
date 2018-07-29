@@ -42,7 +42,7 @@ void testIden()
     cout << "angel\t" << angel << "\t" << endl;
 
 	rectRegion = {1000, 800, 800, 1400 };// rectRegion = { 1700, 700, 600, 1400 };
-    loca::getIdenRectangleRC(rectRegion, loca::RectangleType::RECT_VERTICAL, 50, 1040, &angel, &pt, true);
+    loca::getIdenRectangleRC(rectRegion, loca::RectangleType::RECT_VERTICAL, 52, 1020, &angel, &pt, true);
     circle(img, cv::Point2f(rectRegion.x + pt.x, rectRegion.y + pt.y), 10, Scalar(0, 0, 255));
     line(img, cv::Point2f(rectRegion.x + pt.x, rectRegion.y + pt.y), cv::Point2f(rectRegion.x + pt.x + 1000, rectRegion.y + pt.y - tan(angel*3.1415926 / 180)*(1000)), Scalar(255, 0, 0), 2);
     line(img, cv::Point2f(rectRegion.x + pt.x, rectRegion.y + pt.y), cv::Point2f(rectRegion.x + pt.x - tan((angel)*3.1415926 / 180)*(1000), rectRegion.y + pt.y - 1000), Scalar(255, 0, 0), 2);

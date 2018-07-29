@@ -453,7 +453,7 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
 {
     cv::Rect rectSrc(rectRegion.x, rectRegion.y, rectRegion.with, rectRegion.height);
     Mat img = idenImage(rectSrc).clone();
-    //img = imread("G:/DSC01048/1/getIdenRectangleRC2.jpg", 0);
+    //img = imread("H:/iden/Î¢ÐÅÍ¼Æ¬_20180728155315.jpg", 0);
     Mat dst;
     //blur(img,dst,Size(27,27));
 	medianBlur(img, dst, 17);
@@ -504,7 +504,7 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
                 rect = cv::Rect(0, 0, rotRect.size.height, rotRect.size.width);
             }
             
-            if ((rect.width > markWidth*0.6 && rect.height > markHeight*0.6) && (rect.width < markWidth*1.3 && rect.height < markHeight*1.3))
+            if ((rect.width > markWidth*0.8 && rect.height > markHeight*0.6) && (rect.width < markWidth*1.3 && rect.height < markHeight*1.3))
                 //if (WHR > 1.5)
                 {
                    
@@ -555,7 +555,7 @@ int loca::getIdenRectangleRC(loca::Rect rectRegion, loca::RectangleType rectType
             {
                 rect = cv::Rect(0, 0, rotRect.size.width, rotRect.size.height);
             }
-            if ((rect.width > markWidth*0.6 && rect.height > markHeight*0.6) && (rect.width < markWidth*1.3 && rect.height < markHeight*1.3))
+            if ((rect.width > markWidth*0.6 && rect.height > markHeight*0.8) && (rect.width < markWidth*1.3 && rect.height < markHeight*1.3))
                 //if (1.0 / WHR > 2)
                 {
                     //RotatedRect rotRect = minAreaRect(contours[i]);
