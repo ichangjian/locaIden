@@ -1,7 +1,7 @@
 #pragma once
 #include <stdio.h> 
 #define LOCAPI extern "C" _declspec(dllexport) 
-
+//xing qi tain
 namespace loca{
 
     struct Point2f
